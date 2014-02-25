@@ -1,0 +1,2 @@
+# Module net.tinetov.ninjarope.GwtDefinition
+# RPC service class, partial path of RPC policy file

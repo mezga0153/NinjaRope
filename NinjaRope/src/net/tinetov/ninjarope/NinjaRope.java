@@ -10,6 +10,7 @@ import com.badlogic.gdx.graphics.FPSLogger;
 import com.badlogic.gdx.graphics.OrthographicCamera;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.math.Vector3;
 import com.badlogic.gdx.physics.box2d.Box2DDebugRenderer;
 import com.badlogic.gdx.physics.box2d.World;
 
@@ -24,6 +25,11 @@ public class NinjaRope implements ApplicationListener {
 	private SpriteBatch batch;
 	
 	private Entity game;
+	
+	private int state = 0;
+	
+	private final int STATE_NOT_READY = 0;
+	private final int STATE_READY = 1;
 
 	@Override
 	public void create() {		
@@ -34,32 +40,46 @@ public class NinjaRope implements ApplicationListener {
 
 		this.camera = new OrthographicCamera(w / 50f, h / 50f);
 		
-		this.world = new World(new Vector2(0, -9.81f), true);
 		this.debugRenderer = new Box2DDebugRenderer();
 		
-		this.batch = new SpriteBatch();
+		this.start();
+	}
+	
+	public void start() {
 		
-		this.game = new NinjaRopeGame(this.world, this.camera);
+		this.world = new World(new Vector2(0, -9.81f), true);
+
+		this.batch = new SpriteBatch();
+
+		this.game = new NinjaRopeGame(this.world, this.camera, this);
 		
 		Gdx.input.setInputProcessor((InputProcessor) this.game);
-		
+
 		this.game.init();
+		
+		this.state = this.STATE_READY;
 	}
 
 	@Override
 	public void dispose() {
-		
+		this.state = this.STATE_NOT_READY;
+		this.game.dispose();
+		this.batch.dispose();
+		this.world.dispose();
+	}
+	
+	public void restart() {
+		this.dispose();
+		this.start();
 	}
 
 	@Override
-	public void render() {		
-		world.step(1/60f, 3, 8);
-		
-		this.game.render(this.batch);
-		
-		this.debugRenderer.render(this.world, this.camera.combined);
-		
-		fpsLogger.log();
+	public void render() {
+		if (this.state == this.STATE_READY) {
+			this.game.render(this.batch);
+			
+			this.debugRenderer.render(this.world, this.camera.combined);			
+		}
 	}
 
 	@Override

@@ -3,6 +3,7 @@ package net.tinetov.ninjarope.game;
 import net.tinetov.ninjarope.util.Entity;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.audio.Sound;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.Texture.TextureFilter;
 import com.badlogic.gdx.graphics.g2d.Sprite;
@@ -34,6 +35,8 @@ public class Ninja extends Entity {
 	
 	private Vector2 attach_point;
 	
+	private Sound[] foley_sound;
+	
 	public Ninja(World world) {
 		super(world);
 	}
@@ -43,7 +46,8 @@ public class Ninja extends Entity {
 		BodyDef bodyDef = new BodyDef();
 		bodyDef.type = BodyType.DynamicBody;
 		bodyDef.position.set(0, 5f);
-		
+		bodyDef.linearDamping = 0.5f;
+ 		
 		PolygonShape shape = new PolygonShape();
 		shape.setAsBox(0.5f, 1f);
 
@@ -55,6 +59,8 @@ public class Ninja extends Entity {
 
 		this.ninja = this.world.createBody(bodyDef);
 		this.ninja.createFixture(fixtureDef);
+				
+		this.ninja.setUserData(this);
 		
 		texture = new Texture(Gdx.files.internal("ninja/ninja.png"));
 		texture.setFilter(TextureFilter.Nearest, TextureFilter.Nearest);
@@ -64,6 +70,12 @@ public class Ninja extends Entity {
 		this.sprite = new Sprite(region);
 		this.sprite.setSize(1f, 2f);
 		this.sprite.setOrigin(sprite.getWidth() / 2, sprite.getHeight() / 2);
+		
+		this.foley_sound = new Sound[] {
+			Gdx.audio.newSound(Gdx.files.internal("ninja/foley1.ogg")),
+			Gdx.audio.newSound(Gdx.files.internal("ninja/foley2.ogg")),
+			Gdx.audio.newSound(Gdx.files.internal("ninja/foley3.ogg")),
+		};
 		
 		shape.dispose();
 	}
@@ -91,7 +103,6 @@ public class Ninja extends Entity {
 		fixtureDef.shape = shape;
 		fixtureDef.density = 2f;
 		
-		
 		//fixtureDef.filter.groupIndex = -1;
 		fixtureDef.isSensor = true;
 		
@@ -117,16 +128,29 @@ public class Ninja extends Entity {
 		
 		this.pulley = (PulleyJoint) world.createJoint(pulleyDef);
 		
+		this.foley_sound[(int)(Math.random() * this.foley_sound.length)].play();
+		
 		//this.pulley.applyLinearImpulse(new Vector2(0, 1f), new Vector2(0, 0), true);
 	}
 	
-	public void detach() {
+	public boolean detach() {
+		return this.detach(false);
+	}
+	
+	public boolean detach(boolean broken) {
 		if (this.pulley != null) {
+			for(Sound foley : this.foley_sound) {
+				foley.stop();
+			}
+			
 			this.world.destroyJoint(this.pulley);
 			this.pulley = null;
 			this.world.destroyBody(this.pulley_weight);
 			this.pulley_weight = null;
+			
+			return true;
 		}
+		return false;
 	}
 	
 	@Override
@@ -140,17 +164,16 @@ public class Ninja extends Entity {
 		if (this.pulley != null) {
 			this.pulley_weight.applyForceToCenter(new Vector2(0, -25f), true);
 			
-			if (this.pulley_weight.getLinearVelocity().y > 0) {
+			if (this.pulley_weight.getLinearVelocity().y > 0.5f) {
 				this.detach();
 			}
 			
 			//System.out.println(this.ninja.getPosition().dst(this.attach_point));
-			System.out.println(this.ninja.getAngularVelocity());
 			if (this.ninja.getPosition().dst(this.attach_point) < 1f) {
 				this.detach();
 			}
 		}
-
+		
 		this.ninja.applyForceToCenter(movement, true);
 	}
 

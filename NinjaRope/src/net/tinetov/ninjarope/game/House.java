@@ -1,6 +1,11 @@
 package net.tinetov.ninjarope.game;
 
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.Texture.TextureFilter;
+import com.badlogic.gdx.graphics.g2d.Sprite;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
 import com.badlogic.gdx.math.Vector2;
 import com.badlogic.gdx.physics.box2d.Body;
 import com.badlogic.gdx.physics.box2d.BodyDef;
@@ -16,6 +21,8 @@ public class House extends Entity implements Attachable {
 
 	private float width, height, x;
 	private Body house;
+	
+	private Sprite sprite;
 	
 	public House(World world, float width, float height, float x) {
 		super(world);
@@ -51,13 +58,20 @@ public class House extends Entity implements Attachable {
 		
 		this.house.setUserData(this);
 		
+		Texture texture = new Texture(Gdx.files.internal("ninja/house.png"));
+		texture.setFilter(TextureFilter.Nearest, TextureFilter.Nearest);
+				
+		this.sprite = new Sprite(texture);
+		this.sprite.setSize(this.width, this.height);
+		this.sprite.setOrigin(sprite.getWidth() / 2, sprite.getHeight() / 2);
+		this.sprite.setPosition(this.x, 0);
+		
 		shape.dispose();
 	}
 
 	@Override
 	public void render(SpriteBatch batch) {
-		// TODO Auto-generated method stub
-		
+		this.sprite.draw(batch);
 	}
 
 	@Override
